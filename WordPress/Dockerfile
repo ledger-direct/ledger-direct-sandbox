@@ -1,4 +1,4 @@
-FROM wordpress:6.4-php8.2-apache
+FROM wordpress:6.8.3-php8.2-apache
 
 # Installiere erforderliche Pakete und PHP-Erweiterungen
 RUN apt-get update && apt-get install -y \
@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     wget \
     curl \
+    default-mysql-client \
     && docker-php-ext-install bcmath gmp \
     && rm -rf /var/lib/apt/lists/*
 
@@ -21,8 +22,12 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Create wp-content directory if it doesn't exist
 RUN mkdir -p /var/www/html/wp-content/plugins
 
-# Copy and execute the initialization script
-COPY init-wordpress.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/init-wordpress.sh
-ENTRYPOINT ["/usr/local/bin/init-wordpress.sh"]
+# Custom plugin initialization script
+COPY init-plugins.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/init-plugins.sh
+
+# Custom entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
